@@ -1,0 +1,6 @@
+
+const generateBadge = require('../')
+
+generateBadge()
+
+
