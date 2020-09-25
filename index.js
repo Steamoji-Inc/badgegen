@@ -98,8 +98,8 @@ async function generateBadge(options={}) {
 	const level = (user.level && user.level.toLowerCase()) || 'tinkerer'
 
 	const fetch_imgs = [
-		{ name: 'avatar_bg', url: asset_url('img/badge/badge-avatar-bg.png'), process: process_img }
-		,{ name: 'yellow_bg', url: asset_url('img/badge/badge-yellow-bg.png'), process: process_img }
+		{ name: 'avatar_bg', url: asset_url('img/badge/badge-avatar-bg-big.png'), process: process_img }
+		,{ name: 'yellow_bg', url: asset_url('img/badge/badge-yellow-bg-big.png'), process: process_img }
 		,{ name: 'level', url: asset_url(`img/levels/${level}.png`), process: process_img }
 		,{ name: 'bungee', url: asset_url('fonts/Bungee-Regular.ttf.txt'), process: process_font }
 		/* { name: 'profile', url: user.profileImage, process: }, */
@@ -152,6 +152,8 @@ async function generateBadge(options={}) {
 		width: 500, height: 500
 	})
 
+	doc.setFillColor('#FFFFFF')
+	doc.rect(0, 0, width, height, 'F')
 	doc.addImage(downloads.avatar_bg, 'PNG', x, y, bg_width, bg_height)
 	doc.addImage(prof_img, 'PNG', avatar_x, avatar_y, avatar_width, avatar_height)
 	doc.addImage(downloads.yellow_bg, 'PNG', x, name_bg_y, name_bg_width, name_bg_height)
