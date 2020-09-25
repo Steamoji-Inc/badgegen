@@ -8,10 +8,10 @@
 
         <title>Hello World</title>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.1.1/jspdf.umd.min.js"></script>
-	<script src="./html2canvas.js"></script>
     </head>
     <body>
-        <h1>Hello World</h1>
+	<h1>Steamoji Badge Generator</h1>
+	<canvas width="500px" height="500px"></canvas>
     </body>
 
     <script>
@@ -43,27 +43,56 @@
 	 });
      }
 
-     async function render_profile_image(profile_url) {
-	 let elem = document.createElement("img")
-	 elem.style = "border-radius: 50%";
+     function roundedImage(ctx, x,y,width,height,radius){
+	 ctx.beginPath();
+	 ctx.moveTo(x + radius, y);
+	 ctx.lineTo(x + width - radius, y);
+	 ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+	 ctx.lineTo(x + width, y + height - radius);
+	 ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+	 ctx.lineTo(x + radius, y + height);
+	 ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+	 ctx.lineTo(x, y + radius);
+	 ctx.quadraticCurveTo(x, y, x + radius, y);
+	 ctx.closePath();
+     }
 
-	 let profile_loaded = onload(elem);
+     async function render_profile_image(profile_url, opts={}) {
+	 let img = new Image()
+	 let img_loaded = onload(img);
+	 img.crossOrigin = "anonymous";
+	 img.src = profile_url
 
-	 elem.src = profile_url
-	 document.body.appendChild(elem)
+	 await img_loaded
 
-	 await profile_loaded
+	 const canvas = document.querySelector("canvas")
+	 var ctx = canvas.getContext("2d");
 
-	 const canvas = await window.html2canvas(elem)
-	 const data_url = canvas.toDataURL("image/png")
-	 const buf = base64_to_buf(data_url.replace(/^data:image\/png;base64,/,''))
+	 ctx.save()
+
+	 const x = 0;
+	 const y = 0;
+	 const width = opts.width;
+	 const height = opts.height;
+	 const radius = opts.width / 2;
+
+	 roundedImage(ctx, x, y, width, height, radius)
+	 ctx.clip()
+	 ctx.drawImage(img, x, y, width, height)
+	 ctx.restore()
+
+	 const b64 = canvas.toDataURL("image/png").replace(/^data:image\/png;base64,/, '')
+	 const buf = base64_to_buf(b64)
 	 console.log(buf)
 	 return buf
      }
 
      async function generateBadge(options={}) {
+	 const width = 50;
+	 const height = 75;
+
 	 const pdf_opts = options.pdf || {
-	     format: [50, 75]
+	     format: [width, height]
 	 }
 
 	 const user = options.user || {
@@ -86,25 +115,45 @@
 
 	 const doc = new jsPDF(pdf_opts);
 
-	 let x = 7;
-	 let y = 5;
-	 let width = 35;
-	 let height = 25;
+	 const BG_WIDTH_PERC = 0.8
+	 const NAMEPLATE_SPACING = 1
 
-	 const prof_img = render_profile_image(user.profileImage)
+	 const AVATAR_BG_WIDTH = 408
+	 const AVATAR_BG_HEIGHT = 300
+	 const AVATAR_BG_ASPECT = AVATAR_BG_WIDTH / AVATAR_BG_HEIGHT
 
-	 doc.addImage(imgs.avatar_bg, 'PNG', x, y, width, height)
-	 doc.addImage(prof_img, 'PNG', x+4, y+4, width/2, height/2)
+	 const NAMEPLATE_BG_WIDTH = 512
+	 const NAMEPLATE_BG_HEIGHT = 184
+	 const NAMEPLATE_BG_ASPECT = NAMEPLATE_BG_WIDTH / NAMEPLATE_BG_HEIGHT
 
-	 y += height + 2;
+	 let bg_width = width * BG_WIDTH_PERC
+	 let bg_height = bg_width / AVATAR_BG_ASPECT
 
-	 doc.addImage(imgs.yellow_bg, 'PNG', x, y, width, 15)
+	 let x = width / 2 - bg_width / 2;
+	 let y = 4;
 
-	     doc.save("badge.pdf");
+	 let avatar_width = bg_width * 0.7
+	 let avatar_height = avatar_width
+
+	 let avatar_x = x + (bg_width/2) - (avatar_width/2)
+	 let avatar_y = y + (bg_height/2) - (avatar_height/2)
+
+	 let name_bg_y = y + bg_height + NAMEPLATE_SPACING
+	 let name_bg_width = bg_width
+	 let name_bg_height = name_bg_width / NAMEPLATE_BG_ASPECT
+
+	 const prof_img = await render_profile_image(user.profileImage, {
+	     width: 500, height: 500
+	 })
+
+	 doc.addImage(imgs.avatar_bg, 'PNG', x, y, bg_width, bg_height)
+	 doc.addImage(prof_img, 'PNG', avatar_x, avatar_y, avatar_width, avatar_height)
+	 doc.addImage(imgs.yellow_bg, 'PNG', x, name_bg_y, name_bg_width, name_bg_height)
+
+	 doc.save("badge.pdf");
      }
 
      generateBadge()
 
     </script>
 </html>
-
