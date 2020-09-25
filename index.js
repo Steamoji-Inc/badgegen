@@ -17,8 +17,8 @@ async function generateBadge(options={}) {
 	}
 
 	const fetch_imgs = [
-	  { name: 'avatar_bg', url: asset_url('img/badge/badge-avatar-bg.svg') }
-	, { name: 'yellow_bg', url: asset_url('img/badge/badge-yellow-bg.svg') }
+	  { name: 'avatar_bg', url: asset_url('img/badge/badge-avatar-bg.png') }
+	, { name: 'yellow_bg', url: asset_url('img/badge/badge-yellow-bg.png') }
 	, { name: 'profile', url: user.profileImage },
 	]
 
@@ -31,16 +31,13 @@ async function generateBadge(options={}) {
 
 	const doc = new jsPDF(pdf_opts);
 
-	let x = 10;
+	let x = 7;
 	let y = 10;
-	let width = 100;
-	let height = 100;
+	const width = 35;
 
-	const avatar_bg = imgs.avatar_bg.toString()
-	console.log(avatar_bg)
-	doc.addSvgAsImage(avatar_bg, x, y, width, height)
+	doc.addImage(imgs.avatar_bg, 'PNG', x, x, width, 25)
+	doc.addImage(imgs.yellow_bg, 'PNG', x, 40, width, 20)
 
-	doc.text("Hello world!", 10, 10);
 	doc.save("badge.pdf");
 }
 
