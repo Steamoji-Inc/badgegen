@@ -8,10 +8,12 @@
 
         <title>Hello World</title>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.1.1/jspdf.umd.min.js"></script>
+	<script src="https://assets.steamoji.com/js/qrcode3.js" ></script>
     </head>
     <body>
 	<h1>Steamoji Badge Generator</h1>
 	<canvas width="500px" height="500px"></canvas>
+	<div id="qrcode"></div>
     </body>
 
     <script>
@@ -104,12 +106,16 @@
 	 const user = options.user || {
 	     profileImage: asset_url("profileImages/2df7ff0b-9092-11ea-8a88-0242ac110003-blue-me.jpg"),
 	     name: "Apprentice",
+	     id: "2df7ff0b-9092-11ea-8a88-0242ac110003",
 	     level: "tinkerer",
 	 }
+
+	 const level = (user.level && user.level.toLowerCase()) || 'tinkerer'
 
 	 const fetch_imgs = [
 	      { name: 'avatar_bg', url: asset_url('img/badge/badge-avatar-bg.png'), process: process_img }
 	     ,{ name: 'yellow_bg', url: asset_url('img/badge/badge-yellow-bg.png'), process: process_img }
+	     ,{ name: 'level', url: asset_url(`img/levels/${level}.png`), process: process_img }
 	     ,{ name: 'bungee', url: asset_url('fonts/Bungee-Regular.ttf.txt'), process: process_font }
 	     /* { name: 'profile', url: user.profileImage, process: }, */
 	 ]
@@ -126,7 +132,7 @@
 	 doc.addFont('Bungee.ttf', 'Bungee', 'normal')
 
 	 const BG_WIDTH_PERC = 0.8
-	 const NAMEPLATE_SPACING = 1
+	 const PADDING = 1.5
 
 	 const AVATAR_BG_WIDTH = 408
 	 const AVATAR_BG_HEIGHT = 300
@@ -140,7 +146,7 @@
 	 let bg_height = bg_width / AVATAR_BG_ASPECT
 
 	 let x = width / 2 - bg_width / 2;
-	 let y = 4;
+	 let y = 4.5;
 
 	 let avatar_width = bg_width * 0.7
 	 let avatar_height = avatar_width
@@ -148,7 +154,7 @@
 	 let avatar_x = x + (bg_width/2) - (avatar_width/2)
 	 let avatar_y = y + (bg_height/2) - (avatar_height/2)
 
-	 let name_bg_y = y + bg_height + NAMEPLATE_SPACING
+	 let name_bg_y = y + bg_height + PADDING
 	 let name_bg_width = bg_width
 	 let name_bg_height = name_bg_width / NAMEPLATE_BG_ASPECT
 
@@ -157,6 +163,9 @@
 	 let name_x = x + name_bg_width / 2
 	 let name_y = name_bg_y + name_bg_height / 2 + dim.h / 4
 
+	 let level_y = name_bg_y + name_bg_height + PADDING
+	 let level_size = name_bg_width / 2 - PADDING
+	 let qr_x = x + level_size + PADDING
 
 	 const prof_img = await render_profile_image(user.profileImage, {
 	     width: 500, height: 500
@@ -169,27 +178,48 @@
 	 doc.setTextColor('#FFFFFF')
 	 doc.setFont('Bungee')
 
+	 fitText(doc, user.name, name_bg_width * 0.8)
+
+	 doc.text(user.name, name_x, name_y, {align: 'center'})
+
+	 doc.addImage(downloads.level, 'PNG', x, level_y, level_size, level_size)
+
+	 const qr = await getQR(user.id)
+	 doc.addImage(qr, 'PNG', qr_x, level_y, level_size, level_size)
+
+	 doc.save("badge.pdf");
+     }
+
+     async function getQR(text) {
+         var qrcode = new QRCode(document.querySelector('#qrcode'), {
+	     text: text,
+	     width: 300,
+	     height: 300,
+	 })
+
+	 const img = document.querySelector('#qrcode > img')
+	 await onload(img)
+	 let src = img.src.replace(/^data:image\/png;base64,/, '')
+	 return base64_to_buf(src)
+     }
+
+     function fitText(doc, text, width) {
 	 let fontSize = 24
 	 while(true) {
 	     doc.setFontSize(fontSize)
-	     let dim = doc.getTextDimensions(user.name)
+	     let dim = doc.getTextDimensions(text)
 	     fontSize--;
 
-	     if (fontSize === 0 || dim.w < name_bg_width * 0.8)
+	     if (fontSize === 0 || dim.w < width)
 		 break;
 	 }
-
-	 doc.text(user.name, name_x, name_y, {
-	     align: 'center'
-	 })
-
-	 doc.save("badge.pdf");
      }
 
      generateBadge({
 	 user: {
 	     profileImage: asset_url("profileImages/2df7ff0b-9092-11ea-8a88-0242ac110003-blue-me.jpg"),
 	     name: "William C.",
+	     id: "2df7ff0b-9092-11ea-8a88-0242ac110003",
 	     level: "tinkerer",
 	 }
      })
