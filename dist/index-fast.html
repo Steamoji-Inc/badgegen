@@ -1,0 +1,110 @@
+
+
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <title>Hello World</title>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.1.1/jspdf.umd.min.js"></script>
+	<script src="./html2canvas.js"></script>
+    </head>
+    <body>
+        <h1>Hello World</h1>
+    </body>
+
+    <script>
+     const { jsPDF } = window.jspdf;
+
+     function base64_to_buf(base64) {
+	 var binary_string = window.atob(base64);
+	 var len = binary_string.length;
+	 var bytes = new Uint8Array(len);
+	 for (var i = 0; i < len; i++) {
+             bytes[i] = binary_string.charCodeAt(i);
+	 }
+	 return bytes
+     }
+
+     function asset_url(fname) {
+	 return 'https://assets.steamoji.com/' + fname;
+     }
+
+     async function dofetch(url) {
+	 const resp = await fetch(url)
+	 const buf = await resp.arrayBuffer()
+	 return new Uint8Array(buf)
+     }
+
+     function onload(elem) {
+	 return new Promise(resolve => {
+	     elem.addEventListener('load', resolve)
+	 });
+     }
+
+     async function render_profile_image(profile_url) {
+	 let elem = document.createElement("img")
+	 elem.style = "border-radius: 50%";
+
+	 let profile_loaded = onload(elem);
+
+	 elem.src = profile_url
+	 document.body.appendChild(elem)
+
+	 await profile_loaded
+
+	 const canvas = await window.html2canvas(elem)
+	 const data_url = canvas.toDataURL("image/png")
+	 const buf = base64_to_buf(data_url.replace(/^data:image\/png;base64,/,''))
+	 console.log(buf)
+	 return buf
+     }
+
+     async function generateBadge(options={}) {
+	 const pdf_opts = options.pdf || {
+	     format: [50, 75]
+	 }
+
+	 const user = options.user || {
+	     profileImage: asset_url("profileImages/2df7ff0b-9092-11ea-8a88-0242ac110003-blue-me.jpg"),
+	     level: "tinkerer",
+	 }
+
+	 const fetch_imgs = [
+	     { name: 'avatar_bg', url: asset_url('img/badge/badge-avatar-bg.png') }
+	     , { name: 'yellow_bg', url: asset_url('img/badge/badge-yellow-bg.png') }
+	     /* , { name: 'profile', url: user.profileImage }, */
+	 ]
+
+	 const img_data = await Promise.all(fetch_imgs.map(v => dofetch(v.url)))
+
+	 const imgs = img_data.reduce((obj, data, i) => {
+	     obj[fetch_imgs[i].name] = data
+	     return obj
+	 }, {});
+
+	 const doc = new jsPDF(pdf_opts);
+
+	 let x = 7;
+	 let y = 5;
+	 let width = 35;
+	 let height = 25;
+
+	 const prof_img = render_profile_image(user.profileImage)
+
+	 doc.addImage(imgs.avatar_bg, 'PNG', x, y, width, height)
+	 doc.addImage(prof_img, 'PNG', x+4, y+4, width/2, height/2)
+
+	 y += height + 2;
+
+	 doc.addImage(imgs.yellow_bg, 'PNG', x, y, width, 15)
+
+	     doc.save("badge.pdf");
+     }
+
+     generateBadge()
+
+    </script>
+</html>
+
