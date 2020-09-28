@@ -152,7 +152,7 @@ async function generateBadge(options={}) {
 		width: 500, height: 500
 	})
 
-	doc.setFillColor('#FFFFFF')
+	doc.setFillColor(options.backgroundColor || '#FEFEFE')
 	doc.rect(0, 0, width, height, 'F')
 	doc.addImage(downloads.avatar_bg, 'PNG', x, y, bg_width, bg_height)
 	doc.addImage(prof_img, 'PNG', avatar_x, avatar_y, avatar_width, avatar_height)
