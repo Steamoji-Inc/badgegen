@@ -13,7 +13,7 @@ function base64_to_buf(base64) {
 }
 
 function asset_url(fname) {
-	return 'https://assets.steamoji.com/' + fname;
+	return 'https://staging-uploads-media-assets.s3.amazonaws.com/' + fname;
 }
 
 async function dofetch(job) {
