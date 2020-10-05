@@ -175,7 +175,7 @@ async function generateBadge(options={}) {
 	const qr = await getQR(user.id, options.qrElem || document.createElement('div'))
 	doc.addImage(qr, 'PNG', qr_x, level_y, level_size, level_size)
 
-	doc.save("badge.pdf");
+	doc.save(options.filename || "badge.pdf");
 }
 
 async function getQR(text, elem) {
